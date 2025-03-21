@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 3
+names: ['Bolt', 'Nut', 'Washer']
+
+roboflow:
+  workspace: goutham-9ls4n
+  project: nut-ht1ci
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/goutham-9ls4n/nut-ht1ci/dataset/1
