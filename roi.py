@@ -109,6 +109,7 @@ def select_roi(cap):
     
     return None
 
+# Rest of the code remains the same...
 def order_points(pts):
     """
     Order points in: top-left, top-right, bottom-right, bottom-left order
