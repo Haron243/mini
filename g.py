@@ -284,34 +284,24 @@ class CameraPreviewFrame(BaseFrame):
         
         # Create product count displays (keeping the same style)
         self.canvas.create_text(
-            448.0,
-            633.0,
-            anchor="nw",
-            text="Nut",
+            448.0,633.0, anchor="nw", text="Nut",
             fill="#FFFFFF",
             font=("Montserrat Medium", 18 * -1)
         )
         self.canvas.create_text(
-            816.0,
-            633.0,
-            anchor="nw",
-            text="Bolt",
+            816.0, 633.0, anchor="nw", text="Bolt",
             fill="#FFFFFF",
             font=("Montserrat Medium", 18 * -1)
         )
-        self.canvas.create_text(
-            622.0,
-            633.0,
-            anchor="nw",
-            text="00",
+        
+        # dynamically changing nuts or bolts detected
+        self.nut_count_text=self.canvas.create_text(
+            622.0, 633.0, anchor="nw", text="00",
             fill="#FFFFFF",
             font=("Montserrat Medium", 18 * -1)
         )
-        self.canvas.create_text(
-            1021.0,
-            633.0,
-            anchor="nw",
-            text="00",
+        self.bolt_count_text =self.canvas.create_text(
+            1021.0, 633.0, anchor="nw", text="00",
             fill="#FFFFFF",
             font=("Montserrat Medium", 18 * -1)
         )
@@ -342,6 +332,7 @@ class CameraPreviewFrame(BaseFrame):
             # Run detection using the YOLO model
             results = self.model(frame_for_detection)[0]
             threshold = 0.45
+            object_counts = {"NUT": 0, "BOLT": 0}
             use_cm = True
             unit = "cm" if use_cm else "mm"
             scale_factor = 0.1 if use_cm else 1.0
@@ -350,6 +341,12 @@ class CameraPreviewFrame(BaseFrame):
             for result in results.boxes.data.tolist():
                 box_x1, box_y1, box_x2, box_y2, score, class_id = result
                 if score > threshold:
+                    # to get how many nuts and bolts are detected
+                    object_name = results.names[int(class_id)].upper()
+                    if object_name in object_counts:
+                        object_counts[object_name] += 1
+
+
                     if self.roi_config and inverse_matrix is not None:
                         # Convert box coordinates from warped ROI to original frame coordinates
                         orig_x1, orig_y1 = unwarp_coordinates((box_x1, box_y1), inverse_matrix)
@@ -381,6 +378,10 @@ class CameraPreviewFrame(BaseFrame):
                     cv2.putText(frame_with_roi, label, (display_coords[0], display_coords[1] - 5),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2, cv2.LINE_AA)
             
+            # updating the count of nut and bolt after each loop
+            self.canvas.itemconfig(self.nut_count_text, text=f"{object_counts['NUT']:02d}")
+            self.canvas.itemconfig(self.bolt_count_text, text=f"{object_counts['BOLT']:02d}")
+
             # Overlay calibration info on the frame
             cv2.putText(frame_with_roi, f"Calibration: {self.pixels_per_mm:.2f} px/mm", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
