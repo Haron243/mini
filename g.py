@@ -9,6 +9,14 @@ from Size import calibrate_system, calculate_size, load_calibration_config
 from PIL import Image, ImageTk  # Import PIL for creating placeholder images
 import numpy as np
 
+LOG_FILE = os.path.join(os.path.dirname(__file__), "assets", "frame4", "log.txt")
+
+def write_log(message):
+    """Append a message to the log file with a newline."""
+    with open(LOG_FILE, "a") as f:
+        f.write(message + "\n")
+
+
 class CVISApplication(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -100,6 +108,7 @@ class BaseFrame(tk.Frame):
             )
         except:
             # Fallback if image not found
+            write_log(f"Fallback image did not load! ")
             self.canvas.create_rectangle(0, 0, 1126, 739, fill="#0047AB")
         
         # Try to load logo
@@ -196,6 +205,8 @@ class BaseFrame(tk.Frame):
                 
             except:
                 # Fallback if image not found
+
+
                 button = Button(
                     self,
                     text=btn["text"],
@@ -250,6 +261,7 @@ class BaseFrame(tk.Frame):
                         fg=btn_data["normal_fg"]
                     )
             except:
+                write_log(f" Button configuration failed ! ")
                 pass  # Skip if configuration fails
 
 
@@ -280,6 +292,7 @@ class CameraPreviewFrame(BaseFrame):
             )
             self.status = self.canvas.create_image(745.0, 645.0, image=self.status_image)
         except:
+            write_log(f" Error display image for camera preview ! ")
             self.canvas.create_rectangle(545, 600, 945, 690, fill="#555555", outline="")
         
         # Create product count displays (keeping the same style)
@@ -363,6 +376,8 @@ class CameraPreviewFrame(BaseFrame):
                     object_name = results.names[int(class_id)].upper()
                     label = f"{object_name}: {width_unit:.1f}x{height_unit:.1f}{unit}"
                     
+                    
+
                     # Draw bounding box and dimension lines on frame_with_roi
                     cv2.rectangle(frame_with_roi, (display_coords[0], display_coords[1]), 
                                   (display_coords[2], display_coords[3]), (0, 255, 0), 2)
@@ -438,6 +453,7 @@ class SpecificationFrame(BaseFrame):
             )
         except:
             # Fallback if image not found
+            write_log(f" Failed to load Fallback image! ")
             self.canvas.create_rectangle(450, 225, 650, 265, fill="#555555", outline="")
         
         self.canvas.create_text(
@@ -484,6 +500,7 @@ class SpecificationFrame(BaseFrame):
             )
         except:
             # Fallback if image not found
+            write_log(f" Error not Fallback image! ")
             self.canvas.create_rectangle(450, 395, 650, 435, fill="#555555", outline="")
         
         self.canvas.create_text(
@@ -671,21 +688,25 @@ class LogsFrame(BaseFrame):
             fg="#FFFFFF",
             bd=0
         )
+           
+
         self.log_text.place(x=400, y=150)
-        self.log_text.insert("end", "System started\n")
-        self.log_text.insert("end", "Camera initialized\n")
-        self.log_text.insert("end", "Loading measurement settings\n")
-        self.log_text.insert("end", "Calibration parameters loaded\n")
-        self.log_text.insert("end", "Ready to detect objects\n")
-        self.log_text.insert("end", "Detected Nut - 10mm\n")
-        self.log_text.insert("end", "Detected Bolt - 8mm\n")
-        self.log_text.config(state='disabled')  # Make read-only
+
+        log_file_path = controller.relative_to_assets("logs", "log.txt")
+        if os.path.exists(log_file_path):
+            with open(log_file_path, "r") as f:
+                log_content = f.read()
+        else:
+            log_content = "No logs found.\n"
         
+        self.log_text.insert("end", log_content)
+        self.log_text.config(state='disabled') 
+
         # Try to load status display image
         try:
             self.status_image = PhotoImage(
                 file=controller.relative_to_assets("logs", "image_4.png")
-            )
+            ) 
             self.status = self.canvas.create_image(
                 745.0,
                 645.0,
@@ -693,13 +714,14 @@ class LogsFrame(BaseFrame):
             )
         except:
             # Fallback if image not found
+            write_log(f" Log image is not found! ")
             self.canvas.create_rectangle(545, 600, 945, 690, fill="#555555", outline="")
         
         # Create product count displays
         self.canvas.create_text(
             448.0,
             633.0,
-            anchor="nw",
+            anchor="nw",                
             text="Nut",
             fill="#FFFFFF",
             font=("Montserrat Medium", 18 * -1)
